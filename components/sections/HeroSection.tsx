@@ -3,9 +3,11 @@
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { Scene } from '@/components/3d/Scene';
-import { ParticleBackground } from '@/components/3d/ParticleBackground';
-import { BeeModel } from '@/components/3d/BeeModel';
+import dynamic from 'next/dynamic';
+
+const Scene = dynamic(() => import('@/components/3d/Scene').then(mod => ({ default: mod.Scene })), { ssr: false });
+const ParticleBackground = dynamic(() => import('@/components/3d/ParticleBackground').then(mod => ({ default: mod.ParticleBackground })), { ssr: false });
+const BeeModel = dynamic(() => import('@/components/3d/BeeModel').then(mod => ({ default: mod.BeeModel })), { ssr: false });
 
 export function HeroSection() {
   const { t } = useLanguage();

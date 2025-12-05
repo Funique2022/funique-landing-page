@@ -22,7 +22,7 @@ export function GSplatModel({
   rotation = [0, 0, 0, 1]
 }: GSplatModelProps) {
   const groupRef = useRef<THREE.Group>(null);
-  const viewerRef = useRef<GaussianSplats3D.DropInViewer | null>(null);
+  const viewerRef = useRef<any>(null);
   const { scene, camera, gl } = useThree();
   const isLoadedRef = useRef(false);
 
@@ -53,7 +53,7 @@ export function GSplatModel({
         rotation: rotation,
         splatAlphaRemovalThreshold: 1,
         showLoadingUI: false,
-      }]).catch((error) => {
+      }]).catch((error: any) => {
         console.error('Error loading GS model:', error);
         isLoadedRef.current = false;
       });
@@ -70,7 +70,7 @@ export function GSplatModel({
           if (typeof (viewerRef.current as any).dispose === 'function') {
             (viewerRef.current as any).dispose();
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error disposing viewer:', error);
         }
         viewerRef.current = null;

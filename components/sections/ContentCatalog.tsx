@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ModelViewer } from '@/components/3d/ModelViewer';
+import dynamic from 'next/dynamic';
+
+const ModelViewer = dynamic(() => import('@/components/3d/ModelViewer').then(mod => ({ default: mod.ModelViewer })), { ssr: false });
 
 export function ContentCatalog() {
   const { t, language } = useLanguage();
@@ -50,10 +52,10 @@ export function ContentCatalog() {
                     {item.episodes} {language === 'zh' ? '集' : 'episodes'}
                   </p>
                   <p className="text-sm text-gray-600">{item.duration}</p>
-                  {item.target && (
+                  {'target' in item && item.target && (
                     <p className="text-sm text-gray-600">{item.target}</p>
                   )}
-                  {item.note && (
+                  {'note' in item && item.note && (
                     <p className="text-sm text-gray-500 italic mt-2">{item.note}</p>
                   )}
                 </div>
