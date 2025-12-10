@@ -27,54 +27,87 @@ export function GSplatModel({
   const isLoadedRef = useRef(false);
 
   useEffect(() => {
-    if (!viewerRef.current && !isLoadedRef.current) {
-      isLoadedRef.current = true;
+    let viewer: any = null;
+    let mounted = true;
+
+    const initViewer = async () => {
+      if (!mounted || viewerRef.current) return;
       
-      // Create DropInViewer instance
-      const viewer = new GaussianSplats3D.DropInViewer({
-        gpuAcceleratedSort: true,
-        sharedMemoryForWorkers: true,
-        enableSIMDInSort: true,
-        integerBasedSort: true,
-        sphericalHarmonicsDegree: 0,
-        antialiased: false,
-      });
+      try {
+        // Create DropInViewer instance
+        viewer = new GaussianSplats3D.DropInViewer({
+          gpuAcceleratedSort: true,
+          sharedMemoryForWorkers: true,
+          enableSIMDInSort: true,
+          integerBasedSort: true,
+          sphericalHarmonicsDegree: 0,
+          antialiased: false,
+        });
 
-      // Add the viewer to the group
-      if (groupRef.current) {
-        groupRef.current.add(viewer);
-      }
+        // Add the viewer to the group
+        if (groupRef.current && mounted) {
+          groupRef.current.add(viewer);
+        }
 
-      // Load the PLY file
-      viewer.addSplatScenes([{
-        path: url,
-        position: position,
-        scale: scale,
-        rotation: rotation,
-        splatAlphaRemovalThreshold: 1,
-        showLoadingUI: false,
-      }]).catch((error: any) => {
+        // Load the PLY file
+        if (mounted) {
+          await viewer.addSplatScenes([{
+            path: url,
+            position: position,
+            scale: scale,
+            rotation: rotation,
+            splatAlphaRemovalThreshold: 1,
+            showLoadingUI: false,
+          }]);
+          
+          if (mounted) {
+            viewerRef.current = viewer;
+            isLoadedRef.current = true;
+          }
+        }
+      } catch (error: any) {
         console.error('Error loading GS model:', error);
-        isLoadedRef.current = false;
-      });
+        if (viewer && groupRef.current) {
+          try {
+            groupRef.current.remove(viewer);
+            if (typeof viewer.dispose === 'function') {
+              viewer.dispose();
+            }
+          } catch (e) {
+            // Ignore disposal errors
+          }
+        }
+      }
+    };
 
-      viewerRef.current = viewer;
-    }
+    initViewer();
 
     return () => {
+      mounted = false;
       // Cleanup
-      if (viewerRef.current && groupRef.current) {
-        try {
-          groupRef.current.remove(viewerRef.current);
-          // Dispose viewer if it has a dispose method
-          if (typeof (viewerRef.current as any).dispose === 'function') {
-            (viewerRef.current as any).dispose();
-          }
-        } catch (error: any) {
-          console.error('Error disposing viewer:', error);
-        }
+      if (viewerRef.current) {
+        const currentViewer = viewerRef.current;
         viewerRef.current = null;
         isLoadedRef.current = false;
+        
+        // Defer cleanup to avoid "Scene disposed" errors
+        setTimeout(() => {
+          if (groupRef.current) {
+            try {
+              groupRef.current.remove(currentViewer);
+            } catch (e) {
+              // Ignore removal errors
+            }
+          }
+          
+          try {
+            if (typeof currentViewer.dispose === 'function') {
+              currentViewer.dispose();
+            }
+          } catch (e) {
+            // Ignore disposal errors
+          }
+        }, 100);
       }
     };
   }, [url, position, scale, rotation]);
